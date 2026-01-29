@@ -28,13 +28,13 @@ package com.jcraft.jsch;
 
 import java.util.Vector;
 
-class LocalIdentityRepository implements IdentityRepository {
+public class LocalIdentityRepository implements IdentityRepository {
   private static final String name = "Local Identity Repository";
 
   private Vector<Identity> identities = new Vector<>();
   private JSch.InstanceLogger instLogger;
 
-  LocalIdentityRepository(JSch.InstanceLogger instLogger) {
+  public LocalIdentityRepository(JSch.InstanceLogger instLogger) {
     this.instLogger = instLogger;
   }
 

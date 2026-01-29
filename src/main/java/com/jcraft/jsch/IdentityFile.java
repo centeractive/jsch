@@ -26,17 +26,17 @@
 
 package com.jcraft.jsch;
 
-class IdentityFile implements Identity {
+public class IdentityFile implements Identity {
   private KeyPair kpair;
   private String identity;
 
-  static IdentityFile newInstance(String prvfile, String pubfile, JSch.InstanceLogger instLogger)
-      throws JSchException {
+  public static IdentityFile newInstance(String prvfile, String pubfile,
+      JSch.InstanceLogger instLogger) throws JSchException {
     KeyPair kpair = KeyPair.load(instLogger, prvfile, pubfile);
     return new IdentityFile(prvfile, kpair);
   }
 
-  static IdentityFile newInstance(String name, byte[] prvkey, byte[] pubkey,
+  public static IdentityFile newInstance(String name, byte[] prvkey, byte[] pubkey,
       JSch.InstanceLogger instLogger) throws JSchException {
 
     KeyPair kpair = KeyPair.load(instLogger, prvkey, pubkey);
