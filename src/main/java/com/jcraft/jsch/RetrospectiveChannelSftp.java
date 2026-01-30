@@ -24,6 +24,7 @@ public class RetrospectiveChannelSftp extends ChannelSftp {
     super.connect(connectTimeout);
   }
 
+  @Override
   void sendRequestSftp() throws JSchException, Exception {
     RetrospectiveRequestSftp request = new RetrospectiveRequestSftp();
     if (sudoCommand == null) {
