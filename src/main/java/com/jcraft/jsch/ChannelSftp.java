@@ -208,6 +208,12 @@ public class ChannelSftp extends ChannelSession {
   @Override
   void init() {}
 
+  // for sudoed requests
+  void sendRequestSftp() throws JSchException, Exception {
+    RequestSftp request = new RequestSftp();
+    request.request(getSession(), this);
+  }
+
   @Override
   public void start() throws JSchException {
     try {
@@ -223,8 +229,7 @@ public class ChannelSftp extends ChannelSession {
         throw new JSchException("channel is down");
       }
 
-      Request request = new RequestSftp();
-      request.request(getSession(), this);
+      sendRequestSftp();
 
       /*
        * System.err.println("lmpsize: "+lmpsize); System.err.println("lwsize: "+lwsize);

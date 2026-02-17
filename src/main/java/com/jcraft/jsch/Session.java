@@ -2801,6 +2801,14 @@ public class Session {
   }
 
   private Channel createChannel(String type) {
+    Channel channel = instantiateChannel(type);
+    if (channel == null) {
+      return null;
+    }
+    return addChannel(channel);
+  }
+
+  protected Channel instantiateChannel(String type) {
     Channel channel = null;
     if (type.equals("session")) {
       channel = new ChannelSession();
@@ -2835,10 +2843,7 @@ public class Session {
     if (type.equals("direct-streamlocal@openssh.com")) {
       channel = new ChannelDirectStreamLocal();
     }
-    if (channel == null) {
-      return null;
-    }
-    return addChannel(channel);
+    return channel;
   }
 
   private Channel addChannel(Channel channel) {

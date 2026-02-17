@@ -693,6 +693,10 @@ public class JSch {
     instLogger.setLogger(logger);
   }
 
+  public JSch.InstanceLogger getJSchInstanceLogger() {
+    return instLogger;
+  }
+
   /**
    * Returns the statically set logger, i.e. the logger being used by all JSch instances without
    * explicitly set logger.
@@ -703,7 +707,7 @@ public class JSch {
     return logger;
   }
 
-  static class InstanceLogger {
+  public static class InstanceLogger {
     private Logger logger;
 
     private InstanceLogger() {}
