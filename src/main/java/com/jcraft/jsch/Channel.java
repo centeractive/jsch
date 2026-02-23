@@ -51,7 +51,7 @@ public abstract class Channel {
   protected byte[] type = Util.str2byte("foo");
   volatile int lwsize_max = 0x100000;
   volatile int lwsize = lwsize_max; // local initial window size
-  volatile int lmpsize = 0x4000; // local maximum packet size
+  volatile int lmpsize = 0x10000; // local maximum packet size
 
   volatile long rwsize = 0; // remote initial window size
   volatile int rmpsize = 0; // remote maximum packet size
@@ -157,19 +157,13 @@ public abstract class Channel {
     if (_session != null && isConnected() && _session.getLogger().isEnabled(Logger.WARN)) {
       _session.getLogger().log(Logger.WARN, "getInputStream() should be called before connect()");
     }
-    int max_input_buffer_size = 32 * 1024;
-    try {
-      max_input_buffer_size = Integer.parseInt(getSession().getConfig("max_input_buffer_size"));
-    } catch (Exception e) {
-    }
     int buffer_size = 32 * 1024;
     try {
       buffer_size = Integer.parseInt(getSession().getConfig("buffer_size"));
     } catch (Exception e) {
     }
-    PipedInputStream in = new MyPipedInputStream(buffer_size, max_input_buffer_size);
-    boolean resizable = buffer_size < max_input_buffer_size;
-    io.setOutputStream(new PassiveOutputStream(in, resizable), false);
+    RetrospectivePipedInputStream in = new RetrospectivePipedInputStream(buffer_size);
+    io.setOutputStream(new RetrospectivePassiveOutputStream(in), false);
     return in;
   }
 
@@ -179,19 +173,13 @@ public abstract class Channel {
       _session.getLogger().log(Logger.WARN,
           "getExtInputStream() should be called before connect()");
     }
-    int max_input_buffer_size = 32 * 1024;
-    try {
-      max_input_buffer_size = Integer.parseInt(getSession().getConfig("max_input_buffer_size"));
-    } catch (Exception e) {
-    }
     int buffer_size = 32 * 1024;
     try {
       buffer_size = Integer.parseInt(getSession().getConfig("buffer_size"));
     } catch (Exception e) {
     }
-    PipedInputStream in = new MyPipedInputStream(buffer_size, max_input_buffer_size);
-    boolean resizable = buffer_size < max_input_buffer_size;
-    io.setExtOutputStream(new PassiveOutputStream(in, resizable), false);
+    RetrospectivePipedInputStream in = new RetrospectivePipedInputStream(buffer_size);
+    io.setExtOutputStream(new RetrospectivePassiveOutputStream(in), false);
     return in;
   }
 
@@ -630,30 +618,13 @@ public abstract class Channel {
     }
   }
 
-  static class PassiveOutputStream extends PipedOutputStream {
-    private MyPipedInputStream _sink = null;
-
-    PassiveOutputStream(PipedInputStream in, boolean resizable_buffer) throws IOException {
+  /**
+   * Simplified PassiveOutputStream that extends RetrospectivePipedOutputStream. No checkSpace()
+   * overhead needed as RetrospectivePipedInputStream handles buffer management internally.
+   */
+  static class RetrospectivePassiveOutputStream extends RetrospectivePipedOutputStream {
+    RetrospectivePassiveOutputStream(RetrospectivePipedInputStream in) throws IOException {
       super(in);
-      if (resizable_buffer && (in instanceof MyPipedInputStream)) {
-        this._sink = (MyPipedInputStream) in;
-      }
-    }
-
-    @Override
-    public void write(int b) throws IOException {
-      if (_sink != null) {
-        _sink.checkSpace(1);
-      }
-      super.write(b);
-    }
-
-    @Override
-    public void write(byte[] b, int off, int len) throws IOException {
-      if (_sink != null) {
-        _sink.checkSpace(len);
-      }
-      super.write(b, off, len);
     }
   }
 
