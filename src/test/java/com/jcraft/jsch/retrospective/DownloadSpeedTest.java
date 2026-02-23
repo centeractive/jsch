@@ -13,32 +13,48 @@ public class DownloadSpeedTest {
   @Disabled
   @Test
   public void execute_grep() throws Exception {
-    String command = "cat /home/retroit/integration/logs/OX_BSCS-bscs1ox.log";
+    String command = "cat /home/retroit/integration/fetch/30M.log";
     ChannelExec channel = executeCommand(command);
     InputStream inputStream = channel.getInputStream();
+    System.out.println("InputStream class: " + inputStream.getClass().getName());
     channel.connect();
     ((RetrospectiveChannelExec) channel).execute();
-    // BufferedInputStream bin = new BufferedInputStream(in, 20000000);
-    byte[] buff = new byte[1024 * 1024];
+    // BufferedInputStream disabled to match old test exactly
+    // inputStream = new java.io.BufferedInputStream(inputStream, 256 * 1024);
+    byte[] buff = new byte[32 * 1024];
     int total = 0;
     int count = 0;
     StopWatch watch = new StopWatch();
     watch.start();
     int read = 0, not = 0;
-    while (count != -1) {
-      if (inputStream.available() > 0 || channel.isClosed()) {
-        count = inputStream.read(buff);
-        total += count;
-        read++;
-        System.out.println(count + " --> " + total);
-      } else {
-        not++;
-        // log.info("not");
+    long availableTime = 0, readTime = 0;
+    long minRead = Long.MAX_VALUE, maxRead = 0;
+    // Use blocking read instead of polling pattern
+    while (true) {
+      long t2 = System.nanoTime();
+      count = inputStream.read(buff);
+      long elapsed = System.nanoTime() - t2;
+      readTime += elapsed;
+      if (count > 0) {
+        minRead = Math.min(minRead, elapsed);
+        maxRead = Math.max(maxRead, elapsed);
       }
-      Thread.sleep(10);
+      if (count == -1) {
+        break;
+      }
+      total += count;
+      read++;
+      // Only print first and last few reads to avoid spam
+      if (read <= 5 || read >= 1860) {
+        System.out.println(count + " --> " + total);
+      }
     }
+    System.out.println("Min read time: " + (minRead / 1000) + "us, Max read time: "
+        + (maxRead / 1_000_000) + "ms");
     watch.stop();
     System.out.println(read + "\t" + not + "\t" + watch.getTime() + "ms");
+    System.out.println("available() time: " + (availableTime / 1_000_000) + "ms, read() time: "
+        + (readTime / 1_000_000) + "ms");
   }
 
   private ChannelExec executeCommand(String command) throws Exception {

@@ -1,0 +1,363 @@
+jdk.ExecutionSample {
+  startTime = 12:16:54.494 (2026-02-23)
+  sampledThread = "main" (javaThreadId = 3)
+  state = "STATE_RUNNABLE"
+  stackTrace = [
+    java.lang.Package.<init>(String, String, String, String, String, String, String, URL, ClassLoader) line: 538
+    java.lang.ClassLoader.definePackage(String, String, String, String, String, String, String, URL) line: 2063
+    jdk.internal.loader.BuiltinClassLoader.definePackage(String, Manifest, URL) line: 888
+    jdk.internal.loader.BuiltinClassLoader.defineOrCheckPackage(String, Manifest, URL) line: 795
+    jdk.internal.loader.ClassLoaders$AppClassLoader.defineOrCheckPackage(String, Manifest, URL) line: 185
+    ...
+  ]
+}
+
+jdk.ExecutionSample {
+  startTime = 12:16:54.671 (2026-02-23)
+  sampledThread = "surefire-forkedjvm-stream-flusher" (javaThreadId = 40)
+  state = "STATE_RUNNABLE"
+  stackTrace = [
+    java.util.concurrent.locks.AbstractQueuedSynchronizer.getState() line: 546
+    java.util.concurrent.locks.ReentrantLock$NonfairSync.tryAcquire(int) line: 243
+    java.util.concurrent.locks.AbstractQueuedSynchronizer.acquire(AbstractQueuedSynchronizer$Node, int, boolean, boolean, boolean, long) line: 744
+    java.util.concurrent.locks.AbstractQueuedSynchronizer.reacquire(AbstractQueuedSynchronizer$Node, int) line: 668
+    java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.awaitNanos(long) line: 1806
+    ...
+  ]
+}
+
+jdk.ExecutionSample {
+  startTime = 12:16:55.068 (2026-02-23)
+  sampledThread = "main" (javaThreadId = 3)
+  state = "STATE_RUNNABLE"
+  stackTrace = [
+    java.math.BigInteger.montReduce(int[], int[], int, int) line: 3290
+    java.math.BigInteger.implMontgomerySquare(int[], int[], int, long, int[]) line: 3037
+    java.math.BigInteger.montgomerySquare(int[], int[], int, long, int[]) line: 2993
+    java.math.BigInteger.oddModPow(BigInteger, BigInteger) line: 3263
+    java.math.BigInteger.modPow(BigInteger, BigInteger) line: 2924
+    ...
+  ]
+}
+
+jdk.ExecutionSample {
+  startTime = 12:16:55.163 (2026-02-23)
+  sampledThread = "main" (javaThreadId = 3)
+  state = "STATE_RUNNABLE"
+  stackTrace = [
+    sun.security.util.math.intpoly.MontgomeryIntegerPolynomialP256.reduce(long[]) line: 455
+    sun.security.util.math.intpoly.IntegerPolynomial$MutableElement.setProduct(IntegerModuloP) line: 744
+    sun.security.util.math.intpoly.IntegerPolynomial$MutableElement.setProduct(IntegerModuloP) line: 674
+    sun.security.ec.ECOperations.setDouble(ProjectivePoint$Mutable, MutableIntegerModuloP, MutableIntegerModuloP, MutableIntegerModuloP, MutableIntegerModuloP, MutableIntegerModuloP) line: 239
+    sun.security.ec.ECOperations$DefaultMultiplier.double4(ProjectivePoint$Mutable, MutableIntegerModuloP, MutableIntegerModuloP, MutableIntegerModuloP, MutableIntegerModuloP, MutableIntegerModuloP) line: 542
+    ...
+  ]
+}
+
+jdk.ExecutionSample {
+  startTime = 12:16:55.195 (2026-02-23)
+  sampledThread = "main" (javaThreadId = 3)
+  state = "STATE_RUNNABLE"
+  stackTrace = [
+    sun.security.util.math.intpoly.IntegerPolynomial$MutableElement.setValue(IntegerModuloP) line: 674
+    sun.security.ec.ECOperations.setSum(ProjectivePoint$Mutable, ProjectivePoint$Mutable, MutableIntegerModuloP, MutableIntegerModuloP, MutableIntegerModuloP, MutableIntegerModuloP, MutableIntegerModuloP) line: 387
+    sun.security.ec.ECOperations$DefaultMultiplier.pointMultiply(byte[]) line: 531
+    sun.security.ec.ECOperations.multiply(AffinePoint, byte[]) line: 214
+    sun.security.ec.ECOperations.multiply(ECPoint, byte[]) line: 226
+    ...
+  ]
+}
+
+jdk.ExecutionSample {
+  startTime = 12:16:55.336 (2026-02-23)
+  sampledThread = "main" (javaThreadId = 3)
+  state = "STATE_RUNNABLE"
+  stackTrace = [
+    sun.security.provider.DigestBase.engineReset() line: 175
+    sun.security.provider.DigestBase.engineUpdate(byte[], int, int) line: 111
+    java.security.MessageDigest$Delegate.engineUpdate(byte[], int, int) line: 662
+    java.security.MessageDigest.update(byte[]) line: 363
+    sun.security.provider.HashDrbg.hashGen(byte[], byte[]) line: 257
+    ...
+  ]
+}
+
+jdk.ExecutionSample {
+  startTime = 12:16:55.378 (2026-02-23)
+  sampledThread = "surefire-forkedjvm-stream-flusher" (javaThreadId = 40)
+  state = "STATE_RUNNABLE"
+  stackTrace = [
+    java.util.concurrent.locks.AbstractQueuedSynchronizer$Node.getAndUnsetStatus(int) line: 482
+    java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.awaitNanos(long) line: 1800
+    java.util.concurrent.ScheduledThreadPoolExecutor$DelayedWorkQueue.take() line: 1166
+    java.util.concurrent.ScheduledThreadPoolExecutor$DelayedWorkQueue.take() line: 883
+    java.util.concurrent.ThreadPoolExecutor.getTask() line: 1016
+    ...
+  ]
+}
+
+jdk.ExecutionSample {
+  startTime = 12:16:55.408 (2026-02-23)
+  sampledThread = "main" (javaThreadId = 3)
+  state = "STATE_RUNNABLE"
+  stackTrace = [
+    sun.security.util.math.intpoly.MontgomeryIntegerPolynomialP256.mult(long[], long[], long[]) line: 164
+    sun.security.util.math.intpoly.IntegerPolynomial$MutableElement.setProduct(IntegerModuloP) line: 753
+    sun.security.util.math.intpoly.IntegerPolynomial$MutableElement.setProduct(IntegerModuloP) line: 674
+    sun.security.ec.ECOperations.setDouble(ProjectivePoint$Mutable, MutableIntegerModuloP, MutableIntegerModuloP, MutableIntegerModuloP, MutableIntegerModuloP, MutableIntegerModuloP) line: 240
+    sun.security.ec.ECOperations$DefaultMultiplier.double4(ProjectivePoint$Mutable, MutableIntegerModuloP, MutableIntegerModuloP, MutableIntegerModuloP, MutableIntegerModuloP, MutableIntegerModuloP) line: 542
+    ...
+  ]
+}
+
+jdk.ExecutionSample {
+  startTime = 12:16:56.101 (2026-02-23)
+  sampledThread = "Connect thread 192.168.1.42 session" (javaThreadId = 43)
+  state = "STATE_RUNNABLE"
+  stackTrace = [
+    com.sun.crypto.provider.AESCrypt.implEncryptBlock(byte[], int, byte[], int) line: 1123
+    com.sun.crypto.provider.AESCrypt.encryptBlock(byte[], int, byte[], int) line: 1081
+    com.sun.crypto.provider.CounterMode.implCrypt(byte[], int, int, byte[], int) line: 205
+    com.sun.crypto.provider.CounterMode.crypt(byte[], int, int, byte[], int) line: 195
+    com.sun.crypto.provider.CounterMode.decrypt(byte[], int, int, byte[], int) line: 160
+    ...
+  ]
+}
+
+jdk.ExecutionSample {
+  startTime = 12:16:56.112 (2026-02-23)
+  sampledThread = "Connect thread 192.168.1.42 session" (javaThreadId = 43)
+  state = "STATE_RUNNABLE"
+  stackTrace = [
+    com.sun.crypto.provider.CounterMode.implCrypt(byte[], int, int, byte[], int) line: 209
+    com.sun.crypto.provider.CounterMode.crypt(byte[], int, int, byte[], int) line: 195
+    com.sun.crypto.provider.CounterMode.decrypt(byte[], int, int, byte[], int) line: 160
+    com.sun.crypto.provider.CipherCore.update(byte[], int, int, byte[], int) line: 664
+    com.sun.crypto.provider.AESCipher.engineUpdate(byte[], int, int, byte[], int) line: 408
+    ...
+  ]
+}
+
+jdk.ExecutionSample {
+  startTime = 12:16:56.134 (2026-02-23)
+  sampledThread = "Connect thread 192.168.1.42 session" (javaThreadId = 43)
+  state = "STATE_RUNNABLE"
+  stackTrace = [
+    com.sun.crypto.provider.CounterMode.implCrypt(byte[], int, int, byte[], int) line: 209
+    com.sun.crypto.provider.CounterMode.crypt(byte[], int, int, byte[], int) line: 195
+    com.sun.crypto.provider.CounterMode.decrypt(byte[], int, int, byte[], int) line: 160
+    com.sun.crypto.provider.CipherCore.update(byte[], int, int, byte[], int) line: 664
+    com.sun.crypto.provider.AESCipher.engineUpdate(byte[], int, int, byte[], int) line: 408
+    ...
+  ]
+}
+
+jdk.ExecutionSample {
+  startTime = 12:16:56.144 (2026-02-23)
+  sampledThread = "Connect thread 192.168.1.42 session" (javaThreadId = 43)
+  state = "STATE_RUNNABLE"
+  stackTrace = [
+    java.lang.System.arraycopy(Object, int, Object, int, int)
+    sun.security.provider.SHA2.resetHashes() line: 102
+    sun.security.provider.SHA2.implReset() line: 95
+    sun.security.provider.DigestBase.engineReset() line: 175
+    sun.security.provider.DigestBase.engineUpdate(byte[], int, int) line: 111
+    ...
+  ]
+}
+
+jdk.ExecutionSample {
+  startTime = 12:16:56.154 (2026-02-23)
+  sampledThread = "Connect thread 192.168.1.42 session" (javaThreadId = 43)
+  state = "STATE_RUNNABLE"
+  stackTrace = [
+    com.sun.crypto.provider.CounterMode.implCrypt(byte[], int, int, byte[], int) line: 209
+    com.sun.crypto.provider.CounterMode.crypt(byte[], int, int, byte[], int) line: 195
+    com.sun.crypto.provider.CounterMode.decrypt(byte[], int, int, byte[], int) line: 160
+    com.sun.crypto.provider.CipherCore.update(byte[], int, int, byte[], int) line: 664
+    com.sun.crypto.provider.AESCipher.engineUpdate(byte[], int, int, byte[], int) line: 408
+    ...
+  ]
+}
+
+jdk.ExecutionSample {
+  startTime = 12:16:56.197 (2026-02-23)
+  sampledThread = "main" (javaThreadId = 3)
+  state = "STATE_RUNNABLE"
+  stackTrace = [
+    java.text.SimpleDateFormat.subFormat(int, int, Format$FieldDelegate, Format$StringBuf, boolean) line: 1389
+    java.text.SimpleDateFormat.format(Date, Format$StringBuf, Format$FieldDelegate) line: 1011
+    java.text.SimpleDateFormat.format(Date, Format$StringBuf, FieldPosition) line: 981
+    java.text.DateFormat.format(Date) line: 402
+    org.apache.log4j.helpers.PatternParser$DatePatternConverter.convert(LoggingEvent) line: 443
+    ...
+  ]
+}
+
+jdk.ExecutionSample {
+  startTime = 12:16:56.207 (2026-02-23)
+  sampledThread = "Connect thread 192.168.1.42 session" (javaThreadId = 43)
+  state = "STATE_RUNNABLE"
+  stackTrace = [
+    com.jcraft.jsch.IO.put(byte[], int, int) line: 65
+    com.jcraft.jsch.Channel.write(byte[], int, int) line: 500
+    com.jcraft.jsch.Session.run() line: 1462
+    java.lang.Thread.run() line: 1474
+    ...
+  ]
+}
+
+jdk.ExecutionSample {
+  startTime = 12:16:56.229 (2026-02-23)
+  sampledThread = "main" (javaThreadId = 3)
+  state = "STATE_RUNNABLE"
+  stackTrace = [
+    java.lang.ThreadLocal.get() line: 171
+    org.apache.maven.surefire.report.ClassMethodIndexer.getLocalIndex() line: 56
+    org.apache.maven.surefire.common.junit4.JUnit4RunListener.writeTestOutput(OutputReportEntry) line: 201
+    org.apache.maven.surefire.api.report.ConsoleOutputCapture$ForwardingPrintStream.write(byte[], int, int) line: 57
+    sun.nio.cs.StreamEncoder.writeBytes() line: 220
+    ...
+  ]
+}
+
+jdk.ExecutionSample {
+  startTime = 12:16:56.229 (2026-02-23)
+  sampledThread = "Connect thread 192.168.1.42 session" (javaThreadId = 43)
+  state = "STATE_RUNNABLE"
+  stackTrace = [
+    com.sun.crypto.provider.CounterMode.increment(byte[]) line: 168
+    com.sun.crypto.provider.CounterMode.implCrypt(byte[], int, int, byte[], int) line: 206
+    com.sun.crypto.provider.CounterMode.crypt(byte[], int, int, byte[], int) line: 195
+    com.sun.crypto.provider.CounterMode.decrypt(byte[], int, int, byte[], int) line: 160
+    com.sun.crypto.provider.CipherCore.update(byte[], int, int, byte[], int) line: 664
+    ...
+  ]
+}
+
+jdk.ExecutionSample {
+  startTime = 12:16:56.239 (2026-02-23)
+  sampledThread = "Connect thread 192.168.1.42 session" (javaThreadId = 43)
+  state = "STATE_RUNNABLE"
+  stackTrace = [
+    com.sun.crypto.provider.CounterMode.implCrypt(byte[], int, int, byte[], int) line: 209
+    com.sun.crypto.provider.CounterMode.crypt(byte[], int, int, byte[], int) line: 195
+    com.sun.crypto.provider.CounterMode.decrypt(byte[], int, int, byte[], int) line: 160
+    com.sun.crypto.provider.CipherCore.update(byte[], int, int, byte[], int) line: 664
+    com.sun.crypto.provider.AESCipher.engineUpdate(byte[], int, int, byte[], int) line: 408
+    ...
+  ]
+}
+
+jdk.ExecutionSample {
+  startTime = 12:16:56.250 (2026-02-23)
+  sampledThread = "Connect thread 192.168.1.42 session" (javaThreadId = 43)
+  state = "STATE_RUNNABLE"
+  stackTrace = [
+    java.security.MessageDigest$Delegate.engineUpdate(byte[], int, int) line: 662
+    java.security.MessageDigest.update(byte[], int, int) line: 353
+    com.sun.crypto.provider.HmacCore.engineUpdate(byte[], int, int) line: 193
+    javax.crypto.Mac.update(byte[], int, int) line: 532
+    com.jcraft.jsch.jce.HMAC.update(byte[], int, int) line: 67
+    ...
+  ]
+}
+
+jdk.ExecutionSample {
+  startTime = 12:16:56.260 (2026-02-23)
+  sampledThread = "Connect thread 192.168.1.42 session" (javaThreadId = 43)
+  state = "STATE_RUNNABLE"
+  stackTrace = [
+    com.sun.crypto.provider.CounterMode.implCrypt(byte[], int, int, byte[], int) line: 209
+    com.sun.crypto.provider.CounterMode.crypt(byte[], int, int, byte[], int) line: 195
+    com.sun.crypto.provider.CounterMode.decrypt(byte[], int, int, byte[], int) line: 160
+    com.sun.crypto.provider.CipherCore.update(byte[], int, int, byte[], int) line: 664
+    com.sun.crypto.provider.AESCipher.engineUpdate(byte[], int, int, byte[], int) line: 408
+    ...
+  ]
+}
+
+jdk.ExecutionSample {
+  startTime = 12:16:56.281 (2026-02-23)
+  sampledThread = "Connect thread 192.168.1.42 session" (javaThreadId = 43)
+  state = "STATE_RUNNABLE"
+  stackTrace = [
+    com.sun.crypto.provider.CounterMode.implCrypt(byte[], int, int, byte[], int) line: 209
+    com.sun.crypto.provider.CounterMode.crypt(byte[], int, int, byte[], int) line: 195
+    com.sun.crypto.provider.CounterMode.decrypt(byte[], int, int, byte[], int) line: 160
+    com.sun.crypto.provider.CipherCore.update(byte[], int, int, byte[], int) line: 664
+    com.sun.crypto.provider.AESCipher.engineUpdate(byte[], int, int, byte[], int) line: 408
+    ...
+  ]
+}
+
+jdk.ExecutionSample {
+  startTime = 12:16:56.302 (2026-02-23)
+  sampledThread = "Connect thread 192.168.1.42 session" (javaThreadId = 43)
+  state = "STATE_RUNNABLE"
+  stackTrace = [
+    com.sun.crypto.provider.CounterMode.implCrypt(byte[], int, int, byte[], int) line: 209
+    com.sun.crypto.provider.CounterMode.crypt(byte[], int, int, byte[], int) line: 195
+    com.sun.crypto.provider.CounterMode.decrypt(byte[], int, int, byte[], int) line: 160
+    com.sun.crypto.provider.CipherCore.update(byte[], int, int, byte[], int) line: 664
+    com.sun.crypto.provider.AESCipher.engineUpdate(byte[], int, int, byte[], int) line: 408
+    ...
+  ]
+}
+
+jdk.ExecutionSample {
+  startTime = 12:16:56.333 (2026-02-23)
+  sampledThread = "Connect thread 192.168.1.42 session" (javaThreadId = 43)
+  state = "STATE_RUNNABLE"
+  stackTrace = [
+    com.sun.crypto.provider.CounterMode.implCrypt(byte[], int, int, byte[], int) line: 209
+    com.sun.crypto.provider.CounterMode.crypt(byte[], int, int, byte[], int) line: 195
+    com.sun.crypto.provider.CounterMode.decrypt(byte[], int, int, byte[], int) line: 160
+    com.sun.crypto.provider.CipherCore.update(byte[], int, int, byte[], int) line: 664
+    com.sun.crypto.provider.AESCipher.engineUpdate(byte[], int, int, byte[], int) line: 408
+    ...
+  ]
+}
+
+jdk.ExecutionSample {
+  startTime = 12:16:56.344 (2026-02-23)
+  sampledThread = "Connect thread 192.168.1.42 session" (javaThreadId = 43)
+  state = "STATE_RUNNABLE"
+  stackTrace = [
+    com.sun.crypto.provider.CounterMode.implCrypt(byte[], int, int, byte[], int) line: 209
+    com.sun.crypto.provider.CounterMode.crypt(byte[], int, int, byte[], int) line: 195
+    com.sun.crypto.provider.CounterMode.decrypt(byte[], int, int, byte[], int) line: 160
+    com.sun.crypto.provider.CipherCore.update(byte[], int, int, byte[], int) line: 664
+    com.sun.crypto.provider.AESCipher.engineUpdate(byte[], int, int, byte[], int) line: 408
+    ...
+  ]
+}
+
+jdk.ExecutionSample {
+  startTime = 12:16:56.365 (2026-02-23)
+  sampledThread = "Connect thread 192.168.1.42 session" (javaThreadId = 43)
+  state = "STATE_RUNNABLE"
+  stackTrace = [
+    com.sun.crypto.provider.CounterMode.implCrypt(byte[], int, int, byte[], int) line: 209
+    com.sun.crypto.provider.CounterMode.crypt(byte[], int, int, byte[], int) line: 195
+    com.sun.crypto.provider.CounterMode.decrypt(byte[], int, int, byte[], int) line: 160
+    com.sun.crypto.provider.CipherCore.update(byte[], int, int, byte[], int) line: 664
+    com.sun.crypto.provider.AESCipher.engineUpdate(byte[], int, int, byte[], int) line: 408
+    ...
+  ]
+}
+
+jdk.ExecutionSample {
+  startTime = 12:16:56.375 (2026-02-23)
+  sampledThread = "Connect thread 192.168.1.42 session" (javaThreadId = 43)
+  state = "STATE_RUNNABLE"
+  stackTrace = [
+    com.sun.crypto.provider.CounterMode.implCrypt(byte[], int, int, byte[], int) line: 209
+    com.sun.crypto.provider.CounterMode.crypt(byte[], int, int, byte[], int) line: 195
+    com.sun.crypto.provider.CounterMode.decrypt(byte[], int, int, byte[], int) line: 160
+    com.sun.crypto.provider.CipherCore.update(byte[], int, int, byte[], int) line: 664
+    com.sun.crypto.provider.AESCipher.engineUpdate(byte[], int, int, byte[], int) line: 408
+    ...
+  ]
+}
+
