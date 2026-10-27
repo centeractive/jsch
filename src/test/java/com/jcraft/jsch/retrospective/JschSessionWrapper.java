@@ -1,7 +1,6 @@
 package com.jcraft.jsch.retrospective;
 
 import com.jcraft.jsch.*;
-
 import java.nio.charset.StandardCharsets;
 
 public class JschSessionWrapper {

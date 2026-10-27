@@ -1,13 +1,11 @@
 package com.jcraft.jsch.retrospective;
 
 import com.jcraft.jsch.*;
-
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import org.apache.commons.lang3.time.StopWatch;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 
 public class DownloadSpeedTest {
 

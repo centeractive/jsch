@@ -1,12 +1,11 @@
 package com.jcraft.jsch.retrospective;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 import com.jcraft.jsch.*;
+import java.util.Vector;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-
-import java.util.Vector;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 @Disabled
 public class Ed25519Test {
