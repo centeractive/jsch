@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 
 public class DownloadSpeedTest {
 
@@ -60,7 +61,7 @@ public class DownloadSpeedTest {
   private ChannelExec executeCommand(String command) throws Exception {
     RetrospectiveJSch jsch = new RetrospectiveJSch();
     RetrospectiveSession session = (RetrospectiveSession) jsch.getSession("<R>", "<DEN>", 22);
-    session.setPassword("<R>");
+    session.setPassword("<R>".getBytes(StandardCharsets.UTF_8));
     session.setConfig("StrictHostKeyChecking", "no");
     session.setConfig("buffer_size", Integer.toString(1024 * 1024));
     session.connect();

@@ -74,7 +74,10 @@ class UserAuthPublicKey extends UserAuth {
         for (String pkmethod : pkmethods) {
           boolean add = false;
           for (String server_sig_alg : server_sig_algs) {
-            if (pkmethod.equals(server_sig_alg)) {
+            // This cover the case of the public key is in Openssh certificate format.
+            String pkRawMethod = OpenSshCertificateUtil.getRawKeyType(pkmethod);
+            if (pkmethod.equals(server_sig_alg)
+                || (pkRawMethod != null && pkRawMethod.equals(server_sig_alg))) {
               add = true;
               break;
             }
@@ -131,6 +134,7 @@ class UserAuthPublicKey extends UserAuth {
         session.getConfig("try_additional_pubkey_algorithms").equals("yes");
 
     List<String> rsamethods = new ArrayList<>();
+    List<String> rsacertmethods = new ArrayList<>();
     List<String> nonrsamethods = new ArrayList<>();
     for (String pkmethod : pkmethods) {
       if (pkmethod.equals("ssh-rsa") || pkmethod.equals("rsa-sha2-256")
@@ -138,6 +142,10 @@ class UserAuthPublicKey extends UserAuth {
           || pkmethod.equals("ssh-rsa-sha256@ssh.com") || pkmethod.equals("ssh-rsa-sha384@ssh.com")
           || pkmethod.equals("ssh-rsa-sha512@ssh.com")) {
         rsamethods.add(pkmethod);
+      } else if (pkmethod.equals("ssh-rsa-cert-v01@openssh.com")
+          || pkmethod.equals("rsa-sha2-256-cert-v01@openssh.com")
+          || pkmethod.equals("rsa-sha2-512-cert-v01@openssh.com")) {
+        rsacertmethods.add(pkmethod);
       } else {
         nonrsamethods.add(pkmethod);
       }
@@ -161,6 +169,8 @@ class UserAuthPublicKey extends UserAuth {
       List<String> ipkmethods = null;
       if (_ipkmethod.equals("ssh-rsa")) {
         ipkmethods = new ArrayList<>(rsamethods);
+      } else if (_ipkmethod.equals("ssh-rsa-cert-v01@openssh.com")) {
+        ipkmethods = new ArrayList<>(rsacertmethods);
       } else if (nonrsamethods.contains(_ipkmethod)) {
         ipkmethods = new ArrayList<>(1);
         ipkmethods.add(_ipkmethod);
@@ -184,11 +194,8 @@ class UserAuthPublicKey extends UserAuth {
           loop3: while (it.hasNext()) {
             String ipkmethod = it.next();
             it.remove();
-            if (not_available_pks.contains(ipkmethod) && !(identity instanceof AgentIdentity)) {
-              if (session.getLogger().isEnabled(Logger.DEBUG)) {
-                session.getLogger().log(Logger.DEBUG,
-                    ipkmethod + " not available for identity " + identity.getName());
-              }
+            // Map certificate type to base algorithm for availability check
+            if (isAlgorithmUnavailable(ipkmethod, not_available_pks, identity, session)) {
               continue loop3;
             }
 
@@ -272,11 +279,8 @@ class UserAuthPublicKey extends UserAuth {
         loop4: while (it.hasNext() && session.auth_failures < session.max_auth_tries) {
           String pkmethodsuccess = it.next();
           it.remove();
-          if (not_available_pks.contains(pkmethodsuccess) && !(identity instanceof AgentIdentity)) {
-            if (session.getLogger().isEnabled(Logger.DEBUG)) {
-              session.getLogger().log(Logger.DEBUG,
-                  pkmethodsuccess + " not available for identity " + identity.getName());
-            }
+          // Map certificate type to base algorithm for availability check
+          if (isAlgorithmUnavailable(pkmethodsuccess, not_available_pks, identity, session)) {
             continue loop4;
           }
 
@@ -375,6 +379,31 @@ class UserAuthPublicKey extends UserAuth {
           }
         }
       }
+    }
+    return false;
+  }
+
+  /**
+   * Checks if a public key algorithm is unavailable for a non-agent identity.
+   * <p>
+   * For certificate key types, this checks the availability of the base algorithm.
+   * </p>
+   *
+   * @param pkmethod the public key method/algorithm to check
+   * @param not_available_pks list of unavailable algorithms
+   * @param identity the identity being used
+   * @param session the current session (for logging)
+   * @return true if the algorithm is unavailable and should be skipped, false otherwise
+   */
+  private static boolean isAlgorithmUnavailable(String pkmethod, List<String> not_available_pks,
+      Identity identity, Session session) {
+    String baseAlgorithm = OpenSshCertificateKeyTypes.getBaseKeyType(pkmethod);
+    if (not_available_pks.contains(baseAlgorithm) && !(identity instanceof AgentIdentity)) {
+      if (session.getLogger().isEnabled(Logger.DEBUG)) {
+        session.getLogger().log(Logger.DEBUG,
+            pkmethod + " not available for identity " + identity.getName());
+      }
+      return true;
     }
     return false;
   }

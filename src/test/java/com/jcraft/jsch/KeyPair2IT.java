@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.condition.JRE.JAVA_15;
 
 import java.net.URISyntaxException;
-import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -81,7 +80,7 @@ public class KeyPair2IT {
 
   @ParameterizedTest
   @MethodSource("com.jcraft.jsch.KeyPair2Test#keyArgs")
-  void connectWithPublicKey(String path, String password, String keyType) throws Exception {
+  void connectWithPublicKey(String path, byte[] password, String keyType) throws Exception {
 
     final JSch jSch = createIdentity(path, password);
 
@@ -100,7 +99,7 @@ public class KeyPair2IT {
 
   @ParameterizedTest
   @MethodSource("com.jcraft.jsch.KeyPair2Test#keyArgs")
-  void connectWithPublicKeyAndUserInfo(String path, String password, String keyType)
+  void connectWithPublicKeyAndUserInfo(String path, byte[] password, String keyType)
       throws Exception {
 
     final JSch jSch = new JSch();
@@ -112,7 +111,7 @@ public class KeyPair2IT {
     session.setUserInfo(new UserInfo() {
       @Override
       public String getPassphrase() {
-        return password;
+        return Util.byte2str(password);
       }
 
       @Override
@@ -206,7 +205,7 @@ public class KeyPair2IT {
     }
   }
 
-  private JSch createIdentity(String path, String password)
+  private JSch createIdentity(String path, byte[] password)
       throws JSchException, URISyntaxException {
     JSch ssh = new JSch();
     if (password != null) {

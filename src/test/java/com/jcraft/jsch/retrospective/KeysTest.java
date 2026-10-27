@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.Vector;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -34,9 +35,9 @@ public class KeysTest {
     int port = 22;
     String user = "<R>";
     URL keyUrl1 = this.getClass().getResource("/keys/key1_id_rsa");
-    jsch.addIdentity(keyUrl1.getFile(), "retro");
+    jsch.addIdentity(keyUrl1.getFile(), "retro".getBytes(StandardCharsets.UTF_8));
     URL keyUrl2 = this.getClass().getResource("/keys/key2_id_rsa");
-    jsch.addIdentity(keyUrl2.getFile(), "retro");
+    jsch.addIdentity(keyUrl2.getFile(), "retro".getBytes(StandardCharsets.UTF_8));
     Session session = jsch.getSession(user, host, port);
     session.setConfig("StrictHostKeyChecking", "no");
     session.connect();
@@ -66,7 +67,7 @@ public class KeysTest {
     int port = 22;
     String user = "<R>";
     URL keyUrl = this.getClass().getResource("/keys/key4_id_rsa4096");
-    jsch.addIdentity(keyUrl.getFile(), "retro");
+    jsch.addIdentity(keyUrl.getFile(), "retro".getBytes(StandardCharsets.UTF_8));
     Session session = jsch.getSession(user, host, port);
     session.setConfig("StrictHostKeyChecking", "no");
     session.connect();

@@ -17,9 +17,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout repository
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
     - name: Cache local Maven repository
-      uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
       with:
         path: |
           ~/.m2/repository
@@ -28,7 +28,7 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-build-maven-
     - name: Set up JDK
-      uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
+      uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
       with:
         distribution: 'temurin'
         java-version: '25'
@@ -38,7 +38,7 @@ jobs:
     - name: Archive target directory
       run: tar -cf target.tar target
     - name: Upload target directory archive
-      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
         name: build_target
         path: target.tar
@@ -47,12 +47,12 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        java: ['8', '11', '17', '21', '25']
+        java: ['8', '11', '17', '21', '25', '27']
     steps:
     - name: Checkout repository
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
     - name: Cache local Maven repository
-      uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
       with:
         path: |
           ~/.m2/repository
@@ -70,13 +70,13 @@ jobs:
         [ "$maven_jdk" != "$matrix_java" ] && echo "$maven_jdk" >> "$GITHUB_OUTPUT"
         echo 'EOF' >> "$GITHUB_OUTPUT"
     - name: Set up JDK
-      uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
+      uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
       with:
         distribution: 'temurin'
         java-version: ${{ steps.jdks_to_install.outputs.list }}
         check-latest: true
     - name: Download target directory archive
-      uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+      uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
       with:
         name: build_target
     - name: Extract target directory archive
@@ -85,9 +85,9 @@ jobs:
       run: |
         LOWER_JDK="${{ matrix.java }}"
         UPPER_JDK=$((LOWER_JDK+1))
-        ./mvnw -B -V -e -Pcoverage verify -Dtoolchain.jdk.version="[$LOWER_JDK,$UPPER_JDK)" -Dmaven.resources.skip=true -Dflatten.skip=true -Dmaven.main.skip=true -Dbnd.skip=true -Dassembly.skipAssembly=true -Dmaven.javadoc.skip=true -Dcyclonedx.skip=true -Dspdx.skip=true -Dformatter.skip=true -Dforbiddenapis.skip=true -DskipTests=false -DskipITs=false
+        ./mvnw -B -V -e -Pcoverage verify -Dtoolchain.jdk.version="[$LOWER_JDK,$UPPER_JDK)" -Dwindowsapi.skip=true -Dmaven.resources.skip=true -Dflatten.skip=true -Dmaven.main.skip=true -Dbnd.skip=true -Dassembly.skipAssembly=true -Dmaven.javadoc.skip=true -Dcyclonedx.skip=true -Dspdx.skip=true -Dformatter.skip=true -Dimpsort.skip=true -Dforbiddenapis.skip=true -DskipTests=false -DskipITs=false
     - name: Upload test results
-      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
         name: java-${{ matrix.java }}-testresults
         path: |

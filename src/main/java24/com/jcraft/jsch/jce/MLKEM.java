@@ -28,17 +28,13 @@ package com.jcraft.jsch.jce;
 
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
-import java.security.PublicKey;
 import java.security.spec.NamedParameterSpec;
-import java.util.Arrays;
-import java.util.ArrayList;
-import java.util.List;
 import javax.crypto.KEM;
 
 abstract class MLKEM implements com.jcraft.jsch.KEM {
-  protected NamedParameterSpec params;
-  protected byte[] algorithmIdentifier;
-  protected int publicKeyLen;
+  NamedParameterSpec params;
+  byte[] algorithmIdentifier;
+  int publicKeyLen;
   KEM.Decapsulator decapsulator;
   byte[] publicKey;
 

@@ -40,7 +40,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Properties;
-import java.util.Vector;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -80,7 +79,10 @@ public class Session {
   static final int SSH_MSG_CHANNEL_SUCCESS = 99;
   static final int SSH_MSG_CHANNEL_FAILURE = 100;
 
-  private static final int PACKET_MAX_SIZE = 256 * 1024;
+  // RFC 4253 6.1. Maximum Packet Length: hard ceiling enforced on any incoming decrypted SSH
+  // packet (see read(Buffer) below); package-visible so Channel can bound its local packet size
+  // against it.
+  static final int PACKET_MAX_SIZE = 256 * 1024;
 
   private byte[] V_S; // server version
   private byte[] V_C = Util.str2byte("SSH-2.0-JSCH_" + JSch.VERSION); // client version
@@ -104,6 +106,7 @@ public class Session {
   private int seqo = 0;
 
   String[] guess = null;
+  volatile String[] negotiatedAlgorithms = null;
   private Cipher s2ccipher;
   private Cipher c2scipher;
   private MAC s2cmac;
@@ -674,7 +677,7 @@ public class Session {
     return false;
   }
 
-  private boolean checkServerExtInfo() {
+  boolean checkServerExtInfo() {
     Buffer sb = new Buffer(I_S);
     sb.setOffSet(17);
     byte[] sp = sb.getString(); // server proposal
@@ -684,8 +687,11 @@ public class Session {
     while (l < sp.length) {
       while (l < sp.length && sp[l] != ',')
         l++;
-      if (m == l)
+      if (m == l) {
+        l++;
+        m = l;
         continue;
+      }
       if ("ext-info-s".equals(Util.byte2str(sp, m, l - m))) {
         return true;
       }
@@ -806,6 +812,19 @@ public class Session {
         getLogger().log(Logger.DEBUG,
             "server_host_key proposal after removing unavailable algos is: " + server_host_key);
       }
+
+      // Also filter out certificate types for unavailable base algorithms
+      server_host_key =
+          OpenSshCertificateUtil.filterUnavailableCertTypes(server_host_key, not_available_shks);
+      if (server_host_key == null) {
+        throw new JSchException("There are not any available signature algorithms.");
+      }
+
+      if (getLogger().isEnabled(Logger.DEBUG)) {
+        getLogger().log(Logger.DEBUG,
+            "server_host_key proposal after removing unavailable cert algos is: "
+                + server_host_key);
+      }
     }
 
     String prefer_hkr = getConfig("prefer_known_host_key_types");
@@ -831,11 +850,24 @@ public class Session {
         while (it.hasNext()) {
           String algo = it.next();
           String type = algo;
+
+          // Normalize certificate types to base types for matching against known_hosts
+          // This aligns with OpenSSH behavior where certificate algorithms are matched
+          // against their base key types (e.g., ssh-rsa-cert-v01@openssh.com -> ssh-rsa)
+          // See:
+          // https://github.com/openssh/openssh-portable/blob/5f98660c51e673f521e0216c7ed20205c4af10ed/sshconnect2.c#L186-L189
+          String baseType = OpenSshCertificateKeyTypes.getBaseKeyType(type);
+          if (baseType != null && !baseType.equals(type)) {
+            type = baseType;
+          }
+
+          // Normalize RSA signature variants to base type
           if (type.equals("rsa-sha2-256") || type.equals("rsa-sha2-512")
               || type.equals("ssh-rsa-sha224@ssh.com") || type.equals("ssh-rsa-sha256@ssh.com")
               || type.equals("ssh-rsa-sha384@ssh.com") || type.equals("ssh-rsa-sha512@ssh.com")) {
             type = "ssh-rsa";
           }
+
           for (HostKey hk : hks) {
             if (hk.getType().equals(type)) {
               pref_shks.add(algo);
@@ -929,21 +961,72 @@ public class Session {
   }
 
   private void checkHost(String chost, int port, KeyExchange kex) throws JSchException {
-    String shkc = getConfig("StrictHostKeyChecking");
-
     if (hostKeyAlias != null) {
       chost = hostKeyAlias;
+    } else if (port != 22) {
+      chost = "[" + chost + "]:" + port;
     }
 
-    // System.err.println("shkc: "+shkc);
+    OpenSshCertificate certificate = kex.getHostKeyCertificate();
+    if (certificate != null) {
+      try {
+        OpenSshCertificateHostKeyVerifier.checkHostCertificate(this, certificate);
+        if (getLogger().isEnabled(Logger.INFO)) {
+          getLogger().log(Logger.INFO, "Host '" + chost + "' is known and matches the "
+              + kex.getKeyType() + " host certificate");
+        }
+        return;
+      } catch (JSchRevokedHostKeyException e) {
+        // Revoked key is a hard failure — never fall back to plain key checking
+        // This matches OpenSSH behavior where @revoked is a terminal rejection
+        if (userinfo != null) {
+          userinfo.showMessage("WARNING: REVOKED HOST KEY DETECTED!\n"
+              + "A key associated with the host certificate for " + chost
+              + " is marked as revoked.\n"
+              + "This could mean that a stolen key is being used to impersonate this host.");
+        }
+        if (getLogger().isEnabled(Logger.INFO)) {
+          getLogger().log(Logger.INFO,
+              "Host '" + chost + "' has provided a certificate with a revoked key.");
+        }
+        throw e;
+      } catch (JSchException e) {
+        if (getConfig("host_certificate_to_key_fallback").equals("no")) {
+          throw e;
+        }
+        // Fallback to public key verification - log warning as this bypasses CA validation
+        if (getLogger().isEnabled(Logger.INFO)) {
+          getLogger().log(Logger.INFO,
+              "Host certificate validation failed, falling back to public key verification. "
+                  + "This bypasses CA trust validation. Reason: " + e.getMessage(),
+              e);
+        }
+        byte[] K_S = certificate.getCertificatePublicKey();
+        if (K_S == null) {
+          throw new JSchException(
+              "Invalid certificate '" + certificate.getId() + "': missing public key");
+        }
+        String key_type = kex.getKeyType();
+        String key_footprint = kex.getFingerPrint();
+        String keyAlgorithmName = kex.getKeyAlgorithName();
+        doCheckHostKey(chost, key_type, key_footprint, keyAlgorithmName, K_S);
+        return;
+      }
+    }
 
     byte[] K_S = kex.getHostKey();
     String key_type = kex.getKeyType();
     String key_fprint = kex.getFingerPrint();
+    String keyAlgorithmName = kex.getKeyAlgorithName();
 
-    if (hostKeyAlias == null && port != 22) {
-      chost = ("[" + chost + "]:" + port);
-    }
+    doCheckHostKey(chost, key_type, key_fprint, keyAlgorithmName, K_S);
+  }
+
+  private void doCheckHostKey(String chost, String key_type, String key_fprint,
+      String keyAlgorithmName, byte[] K_S) throws JSchException {
+
+    String shkc = getConfig("StrictHostKeyChecking");
+    // System.err.println("shkc: "+shkc);
 
     HostKeyRepository hkr = getHostKeyRepository();
 
@@ -993,7 +1076,7 @@ public class Session {
       }
 
       synchronized (hkr) {
-        hkr.remove(chost, kex.getKeyAlgorithName(), null);
+        hkr.remove(chost, keyAlgorithmName, null);
         insert = true;
       }
     }
@@ -1025,7 +1108,7 @@ public class Session {
     }
 
     if (i == HostKeyRepository.OK) {
-      HostKey[] keys = hkr.getHostKey(chost, kex.getKeyAlgorithName());
+      HostKey[] keys = hkr.getHostKey(chost, keyAlgorithmName);
       String _key = Util.byte2str(Util.toBase64(K_S, 0, K_S.length, true));
       for (int j = 0; j < keys.length; j++) {
         if (keys[j].getKey().equals(_key) && keys[j].getMarker().equals("@revoked")) {
@@ -1167,11 +1250,15 @@ public class Session {
   }
 
   Buffer read(Buffer buf) throws Exception {
+    // determine which encryption and authentication mode is currently active
+    // for the server-to-client (s2c) connection
     int j = 0;
     boolean isChaCha20 = (s2ccipher != null && s2ccipher.isChaCha20());
     boolean isAEAD = (s2ccipher != null && s2ccipher.isAEAD());
     boolean isEtM =
         (!isChaCha20 && !isAEAD && s2ccipher != null && s2cmac != null && s2cmac.isEtM());
+
+    // Decrypting
     while (true) {
       buf.reset();
       if (isChaCha20) {
@@ -1265,17 +1352,23 @@ public class Session {
           s2ccipher.update(buf.buffer, 4, j, buf.buffer, 4);
         }
       } else {
+        // fall back to the older Encrypt-and-MAC mode.
         io.getByte(buf.buffer, buf.index, s2ccipher_size);
         buf.index += s2ccipher_size;
         if (s2ccipher != null) {
           s2ccipher.update(buf.buffer, 0, s2ccipher_size, buf.buffer, 0);
         }
+
+        // calculating length of the incoming packet
         j = ((buf.buffer[0] << 24) & 0xff000000) | ((buf.buffer[1] << 16) & 0x00ff0000)
             | ((buf.buffer[2] << 8) & 0x0000ff00) | ((buf.buffer[3]) & 0x000000ff);
         // RFC 4253 6.1. Maximum Packet Length
         if (j < 5 || j > PACKET_MAX_SIZE) {
           start_discard(buf, s2ccipher, s2cmac, 0, PACKET_MAX_SIZE);
         }
+
+        // calculates how many more bytes need to be read from the buffer to get the rest of the
+        // encrypted SSH packet
         int need = j + 4 - s2ccipher_size;
         // if(need<0){
         // throw new IOException("invalid data");
@@ -1324,18 +1417,22 @@ public class Session {
       }
 
       if (inflater != null) {
-        // inflater.uncompress(buf);
-        int pad = buf.buffer[4];
-        uncompress_len[0] = buf.index - 5 - pad;
-        byte[] foo = inflater.uncompress(buf.buffer, 5, uncompress_len);
-        if (foo != null) {
-          buf.buffer = foo;
-          buf.index = 5 + uncompress_len[0];
-        } else {
-          if (getLogger().isEnabled(Logger.ERROR)) {
-            getLogger().log(Logger.ERROR, "fail in inflater");
+        try {
+          // inflater.uncompress(buf);
+          int pad = buf.buffer[4];
+          uncompress_len[0] = buf.index - 5 - pad;
+          byte[] foo = inflater.uncompress(buf.buffer, 5, uncompress_len);
+          if (foo != null) {
+            buf.buffer = foo;
+            buf.index = 5 + uncompress_len[0];
+          } else {
+            if (getLogger().isEnabled(Logger.ERROR)) {
+              getLogger().log(Logger.ERROR, "fail in inflater");
+            }
+            break;
           }
-          break;
+        } catch (Compression.InflaterException e) {
+          throw new JSchException(e.getMessage(), e);
         }
       }
 
@@ -1501,6 +1598,7 @@ public class Session {
     } finally {
       kex.clearK();
     }
+    negotiatedAlgorithms = guess;
     in_kex = false;
     if (doStrictKex) {
       seqi = 0;
@@ -2005,9 +2103,14 @@ public class Session {
             channel = getChannelById(i);
             if (channel != null) {
               byte reply_type = (byte) SSH_MSG_CHANNEL_FAILURE;
-              if ((Util.byte2str(foo)).equals("exit-status")) {
+              String reqType = Util.byte2str(foo);
+              if (reqType.equals("exit-status")) {
                 i = buf.getInt(); // exit-status
                 channel.setExitStatus(i);
+                reply_type = (byte) SSH_MSG_CHANNEL_SUCCESS;
+              } else if (reqType.equals("exit-signal")) {
+                byte[] signal = buf.getString(); // exit-signal
+                channel.setExitSignal(Util.byte2str(signal));
                 reply_type = (byte) SSH_MSG_CHANNEL_SUCCESS;
               }
               if (reply) {
@@ -2016,7 +2119,6 @@ public class Session {
                 buf.putInt(channel.getRecipient());
                 write(packet);
               }
-            } else {
             }
             break;
           case SSH_MSG_CHANNEL_OPEN:
@@ -2115,7 +2217,7 @@ public class Session {
       in_kex = false;
       if (getLogger().isEnabled(Logger.INFO)) {
         getLogger().log(Logger.INFO,
-            "Caught an exception, leaving main loop due to " + e.getMessage());
+            "Caught an exception, leaving main loop due to " + e.getMessage(), e);
       }
       // System.err.println("# Session.run");
       // e.printStackTrace();
@@ -2250,7 +2352,6 @@ public class Session {
   public void setThreadFactory(ThreadFactory threadFactory) {
     this.threadFactory = Objects.requireNonNull(threadFactory);
   }
-
 
   /**
    * Returns the thread factory used by this instance.
@@ -2532,15 +2633,15 @@ public class Session {
   Forwarding parseForwarding(String conf) throws JSchException {
     String[] tmp = conf.split(" ");
     if (tmp.length > 1) { // "[bind_address:]port host:hostport"
-      Vector<String> foo = new Vector<>();
+      List<String> foo = new ArrayList<>();
       for (int i = 0; i < tmp.length; i++) {
         if (tmp[i].length() == 0)
           continue;
-        foo.addElement(tmp[i].trim());
+        foo.add(tmp[i].trim());
       }
       StringBuilder sb = new StringBuilder(); // join
       for (int i = 0; i < foo.size(); i++) {
-        sb.append(foo.elementAt(i));
+        sb.append(foo.get(i));
         if (i + 1 < foo.size())
           sb.append(":");
       }
@@ -2910,6 +3011,10 @@ public class Session {
     ChannelX11.setCookie(cookie);
   }
 
+  /**
+   * @deprecated use #setPassword(byte[] password)
+   */
+  @Deprecated
   public void setPassword(String password) {
     if (password != null)
       this.password = Util.str2byte(password);
@@ -3011,6 +3116,151 @@ public class Session {
 
   public void setClientVersion(String cv) {
     V_C = Util.str2byte(cv);
+  }
+
+  private String getNegotiatedAlgorithm(int proposal) {
+    String[] g = negotiatedAlgorithms;
+    return g == null ? null : g[proposal];
+  }
+
+  /**
+   * Returns the key exchange algorithm that was negotiated with the server.
+   *
+   * <p>
+   * The value reflects the most recently completed key exchange: it is updated when the newly
+   * negotiated algorithms are put into use, so while a rekey is in progress it still reports the
+   * algorithms currently in effect.
+   *
+   * @return the negotiated key exchange algorithm, or {@code null} if no key exchange has completed
+   *         yet
+   */
+  public String getKexAlgorithm() {
+    return getNegotiatedAlgorithm(KeyExchange.PROPOSAL_KEX_ALGS);
+  }
+
+  /**
+   * Returns the server host key algorithm that was negotiated with the server.
+   *
+   * <p>
+   * The value reflects the most recently completed key exchange: it is updated when the newly
+   * negotiated algorithms are put into use, so while a rekey is in progress it still reports the
+   * algorithms currently in effect.
+   *
+   * @return the negotiated server host key algorithm, or {@code null} if no key exchange has
+   *         completed yet
+   */
+  public String getServerHostKeyAlgorithm() {
+    return getNegotiatedAlgorithm(KeyExchange.PROPOSAL_SERVER_HOST_KEY_ALGS);
+  }
+
+  /**
+   * Returns the client to server cipher algorithm that was negotiated with the server.
+   *
+   * <p>
+   * The value reflects the most recently completed key exchange: it is updated when the newly
+   * negotiated algorithms are put into use, so while a rekey is in progress it still reports the
+   * algorithms currently in effect.
+   *
+   * @return the negotiated client to server cipher algorithm, or {@code null} if no key exchange
+   *         has completed yet
+   */
+  public String getCipherAlgorithmC2S() {
+    return getNegotiatedAlgorithm(KeyExchange.PROPOSAL_ENC_ALGS_CTOS);
+  }
+
+  /**
+   * Returns the server to client cipher algorithm that was negotiated with the server.
+   *
+   * <p>
+   * The value reflects the most recently completed key exchange: it is updated when the newly
+   * negotiated algorithms are put into use, so while a rekey is in progress it still reports the
+   * algorithms currently in effect.
+   *
+   * @return the negotiated server to client cipher algorithm, or {@code null} if no key exchange
+   *         has completed yet
+   */
+  public String getCipherAlgorithmS2C() {
+    return getNegotiatedAlgorithm(KeyExchange.PROPOSAL_ENC_ALGS_STOC);
+  }
+
+  /**
+   * Returns the client to server MAC algorithm that was negotiated with the server.
+   *
+   * <p>
+   * The value reflects the most recently completed key exchange: it is updated when the newly
+   * negotiated algorithms are put into use, so while a rekey is in progress it still reports the
+   * algorithms currently in effect.
+   *
+   * @return the negotiated client to server MAC algorithm, or {@code null} if no key exchange has
+   *         completed yet or if the negotiated client to server cipher is an AEAD cipher, in which
+   *         case no separate MAC algorithm is negotiated
+   */
+  public String getMacAlgorithmC2S() {
+    return getNegotiatedAlgorithm(KeyExchange.PROPOSAL_MAC_ALGS_CTOS);
+  }
+
+  /**
+   * Returns the server to client MAC algorithm that was negotiated with the server.
+   *
+   * <p>
+   * The value reflects the most recently completed key exchange: it is updated when the newly
+   * negotiated algorithms are put into use, so while a rekey is in progress it still reports the
+   * algorithms currently in effect.
+   *
+   * @return the negotiated server to client MAC algorithm, or {@code null} if no key exchange has
+   *         completed yet or if the negotiated server to client cipher is an AEAD cipher, in which
+   *         case no separate MAC algorithm is negotiated
+   */
+  public String getMacAlgorithmS2C() {
+    return getNegotiatedAlgorithm(KeyExchange.PROPOSAL_MAC_ALGS_STOC);
+  }
+
+  /**
+   * Returns the client to server compression algorithm that was negotiated with the server.
+   *
+   * <p>
+   * The value reflects the most recently completed key exchange: it is updated when the newly
+   * negotiated algorithms are put into use, so while a rekey is in progress it still reports the
+   * algorithms currently in effect.
+   *
+   * @return the negotiated client to server compression algorithm, or {@code null} if no key
+   *         exchange has completed yet
+   */
+  public String getCompressionAlgorithmC2S() {
+    return getNegotiatedAlgorithm(KeyExchange.PROPOSAL_COMP_ALGS_CTOS);
+  }
+
+  /**
+   * Returns the server to client compression algorithm that was negotiated with the server.
+   *
+   * <p>
+   * The value reflects the most recently completed key exchange: it is updated when the newly
+   * negotiated algorithms are put into use, so while a rekey is in progress it still reports the
+   * algorithms currently in effect.
+   *
+   * @return the negotiated server to client compression algorithm, or {@code null} if no key
+   *         exchange has completed yet
+   */
+  public String getCompressionAlgorithmS2C() {
+    return getNegotiatedAlgorithm(KeyExchange.PROPOSAL_COMP_ALGS_STOC);
+  }
+
+  /**
+   * Returns whether strict key exchange was negotiated with the server.
+   *
+   * <p>
+   * Strict key exchange is only negotiated during the initial key exchange, so unlike the
+   * negotiated algorithms this value does not change when the session is rekeyed. It returns
+   * {@code false} again once the session is disconnected.
+   *
+   * @return {@code true} if strict key exchange, the countermeasure against
+   *         <a href="https://nvd.nist.gov/vuln/detail/CVE-2023-48795">CVE-2023-48795</a>, was
+   *         negotiated, or {@code false} if the initial key exchange has not started yet, if the
+   *         server did not support it, or if it was turned off with the {@code enable_strict_kex}
+   *         configuration
+   */
+  public boolean isStrictKex() {
+    return doStrictKex;
   }
 
   public void sendIgnore() throws Exception {
@@ -3128,20 +3378,19 @@ public class Session {
     String cipherc2s = getConfig("cipher.c2s");
     String ciphers2c = getConfig("cipher.s2c");
 
-    Vector<String> result = new Vector<>();
+    List<String> result = new ArrayList<>();
     String[] _ciphers = Util.split(ciphers, ",");
     for (int i = 0; i < _ciphers.length; i++) {
       String cipher = _ciphers[i];
       if (ciphers2c.indexOf(cipher) == -1 && cipherc2s.indexOf(cipher) == -1)
         continue;
       if (!checkCipher(getConfig(cipher))) {
-        result.addElement(cipher);
+        result.add(cipher);
       }
     }
     if (result.size() == 0)
       return null;
-    String[] foo = new String[result.size()];
-    System.arraycopy(result.toArray(), 0, foo, 0, result.size());
+    String[] foo = result.toArray(new String[0]);
 
     if (getLogger().isEnabled(Logger.INFO)) {
       for (int i = 0; i < foo.length; i++) {
@@ -3174,20 +3423,19 @@ public class Session {
     String macc2s = getConfig("mac.c2s");
     String macs2c = getConfig("mac.s2c");
 
-    Vector<String> result = new Vector<>();
+    List<String> result = new ArrayList<>();
     String[] _macs = Util.split(macs, ",");
     for (int i = 0; i < _macs.length; i++) {
       String mac = _macs[i];
       if (macs2c.indexOf(mac) == -1 && macc2s.indexOf(mac) == -1)
         continue;
       if (!checkMac(getConfig(mac))) {
-        result.addElement(mac);
+        result.add(mac);
       }
     }
     if (result.size() == 0)
       return null;
-    String[] foo = new String[result.size()];
-    System.arraycopy(result.toArray(), 0, foo, 0, result.size());
+    String[] foo = result.toArray(new String[0]);
 
     if (getLogger().isEnabled(Logger.INFO)) {
       for (int i = 0; i < foo.length; i++) {
@@ -3217,17 +3465,21 @@ public class Session {
       getLogger().log(Logger.INFO, "CheckKexes: " + kexes);
     }
 
-    Vector<String> result = new Vector<>();
+    String kex = getConfig("kex");
+
+    List<String> result = new ArrayList<>();
     String[] _kexes = Util.split(kexes, ",");
     for (int i = 0; i < _kexes.length; i++) {
-      if (!checkKex(this, getConfig(_kexes[i]))) {
-        result.addElement(_kexes[i]);
+      String k = _kexes[i];
+      if (kex.indexOf(k) == -1)
+        continue;
+      if (!checkKex(this, getConfig(k))) {
+        result.add(k);
       }
     }
     if (result.size() == 0)
       return null;
-    String[] foo = new String[result.size()];
-    System.arraycopy(result.toArray(), 0, foo, 0, result.size());
+    String[] foo = result.toArray(new String[0]);
 
     if (getLogger().isEnabled(Logger.INFO)) {
       for (int i = 0; i < foo.length; i++) {
@@ -3257,28 +3509,84 @@ public class Session {
       getLogger().log(Logger.INFO, "CheckSignatures: " + sigs);
     }
 
-    Vector<String> result = new Vector<>();
+    List<String> result = new ArrayList<>();
     String[] _sigs = Util.split(sigs, ",");
     for (int i = 0; i < _sigs.length; i++) {
       try {
+        // Map certificate algorithm names to their base signature algorithm.
+        // Certificate algorithms use the same Signature implementations as their base algorithms.
+        String sigToCheck = OpenSshCertificateKeyTypes.getBaseKeyType(_sigs[i]);
         Class<? extends Signature> c =
-            Class.forName(JSch.getConfig(_sigs[i])).asSubclass(Signature.class);
+            Class.forName(JSch.getConfig(sigToCheck)).asSubclass(Signature.class);
         final Signature sig = c.getDeclaredConstructor().newInstance();
         sig.init();
       } catch (Exception | LinkageError e) {
-        result.addElement(_sigs[i]);
+        result.add(_sigs[i]);
       }
     }
     if (result.size() == 0)
       return null;
-    String[] foo = new String[result.size()];
-    System.arraycopy(result.toArray(), 0, foo, 0, result.size());
+    String[] foo = result.toArray(new String[0]);
+
     if (getLogger().isEnabled(Logger.INFO)) {
       for (int i = 0; i < foo.length; i++) {
         getLogger().log(Logger.INFO, foo[i] + " is not available.");
       }
     }
     return foo;
+  }
+
+  /**
+   * Checks if a CA signature algorithm is allowed and available at runtime.
+   * <p>
+   * This method validates that the given algorithm is:
+   * <ol>
+   * <li>Listed in the configured {@code ca_signature_algorithms}</li>
+   * <li>Not in the list of unavailable signature algorithms (as determined by
+   * {@code CheckSignatures})</li>
+   * </ol>
+   * </p>
+   *
+   * @param algorithm the CA signature algorithm to check
+   * @throws JSchException if the algorithm is not allowed or not available at runtime
+   */
+  void checkCASignatureAlgorithm(String algorithm) throws JSchException {
+    String caSignatureAlgorithms = getConfig("ca_signature_algorithms");
+    String[] allowedAlgorithms;
+    if (caSignatureAlgorithms == null || caSignatureAlgorithms.isEmpty()) {
+      allowedAlgorithms = new String[0];
+    } else {
+      // Check if algorithm is in the allowed list
+      allowedAlgorithms = Util.split(caSignatureAlgorithms, ",");
+    }
+    boolean isAllowed = false;
+    for (String allowed : allowedAlgorithms) {
+      if (allowed.equals(algorithm)) {
+        isAllowed = true;
+        break;
+      }
+    }
+
+    if (!isAllowed) {
+      throw new JSchException("CA signature algorithm '" + algorithm
+          + "' is not in the allowed ca_signature_algorithms list: " + caSignatureAlgorithms);
+    }
+
+    // Check if the algorithm is in the cached unavailable signatures list.
+    // Copy volatile field to local variable to avoid race condition.
+    String[] unavailableSigs = not_available_shks;
+    if (unavailableSigs != null) {
+      for (String unavailable : unavailableSigs) {
+        if (unavailable.equals(algorithm)) {
+          throw new JSchException(
+              "CA signature algorithm '" + algorithm + "' is not available at runtime. "
+                  + "This may be due to missing cryptographic provider support "
+                  + "(e.g., Ed25519 on Java 8 without Bouncy Castle).");
+        }
+      }
+    }
+    // If unavailableSigs is null, either all probed algorithms are available,
+    // or the user chose not to probe via CheckSignatures - respect that choice.
   }
 
   /**

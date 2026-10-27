@@ -25,6 +25,7 @@ import java.util.zip.Inflater;
  */
 public class Compression implements com.jcraft.jsch.Compression {
   private static final int BUF_SIZE = 4096;
+  private static final int PACKET_MAX_SIZE = 256 * 1024;
   private final int buffer_margin = 32 + 20; // AES256 + HMACSHA1
   private Deflater deflater;
   private Inflater inflater;
@@ -66,6 +67,9 @@ public class Compression implements com.jcraft.jsch.Compression {
   public void init(int type, int level) {
     if (type == DEFLATER) {
       deflater = new Deflater(level);
+      // Match OpenSSH behavior:
+      // https://github.com/openssh/openssh-portable/commit/1d5340fce24526719e32aebc4c721fc228182ace
+      deflater.setStrategy(Deflater.HUFFMAN_ONLY);
     } else if (type == INFLATER) {
       inflater = new Inflater();
       inflated_buf = new byte[BUF_SIZE];
@@ -111,6 +115,12 @@ public class Compression implements com.jcraft.jsch.Compression {
     try {
       do {
         int result = inflater.inflate(tmpbuf, 0, tmpbuf.length);
+        // 5 = padding_length (1 byte) + min random padding (4 bytes)
+        // see RFC4253 6. Binary Packet Protocol
+        if (inflated_end + result > PACKET_MAX_SIZE - 5) {
+          throw new com.jcraft.jsch.Compression.InflaterException(
+              "Decompressed packet exceeds PACKET_MAX_SIZE");
+        }
         if (inflated_buf.length < inflated_end + result) {
           byte[] tmp = new byte[inflated_end + result];
           System.arraycopy(inflated_buf, 0, tmp, 0, inflated_end);

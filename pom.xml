@@ -4,7 +4,7 @@
     <groupId>com.github.mwiede</groupId>
     <artifactId>jsch</artifactId>
     <packaging>jar</packaging>
-    <version>2.27.7-centeractive</version>
+    <version>2.28.8-centeractive</version>
     <name>JSch</name>
     <url>https://github.com/mwiede/jsch</url>
     <description>JSch is a pure Java implementation of SSH2</description>
@@ -12,7 +12,7 @@
         <connection>scm:git:https://github.com/mwiede/jsch.git</connection>
         <developerConnection>scm:git:https://github.com/mwiede/jsch.git</developerConnection>
         <url>https://github.com/mwiede/jsch</url>
-        <tag>HEAD</tag>
+        <tag>jsch-2.28.8</tag>
     </scm>
     <issueManagement>
         <system>GitHub</system>
@@ -65,23 +65,23 @@
         </license>
     </licenses>
     <properties>
-        <project.build.outputTimestamp>2025-11-27T05:59:42Z</project.build.outputTimestamp>
+        <project.build.outputTimestamp>2026-10-10T09:10:45Z</project.build.outputTimestamp>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <skipITs>true</skipITs>
         <releaseParallelPut>false</releaseParallelPut>
-        <junixsocket.version>2.10.1</junixsocket.version>
-        <jna.version>5.18.1</jna.version>
-        <log4j.version>2.25.3</log4j.version>
-        <errorprone.version>2.46.0</errorprone.version>
-        <surefire.version>3.5.4</surefire.version>
+        <junixsocket.version>2.11.1</junixsocket.version>
+        <jna.version>5.19.1</jna.version>
+        <log4j.version>2.26.1</log4j.version>
+        <errorprone.version>2.50.0</errorprone.version>
+        <surefire.version>3.6.0</surefire.version>
         <toolchain.jdk.version>[25,)</toolchain.jdk.version>
     </properties>
     <dependencies>
         <dependency>
             <groupId>org.bouncycastle</groupId>
             <artifactId>bcprov-jdk18on</artifactId>
-            <version>1.83</version>
+            <version>1.86</version>
             <optional>true</optional>
         </dependency>
         <dependency>
@@ -117,19 +117,19 @@
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
-            <version>2.0.17</version>
+            <version>2.0.20</version>
             <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.14.2</version>
+            <version>5.14.4</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>testcontainers-junit-jupiter</artifactId>
-            <version>2.0.3</version>
+            <version>2.0.5</version>
             <scope>test</scope>
             <!-- Rely upon jna-jpms brought in above -->
             <exclusions>
@@ -146,13 +146,13 @@
         <dependency>
             <groupId>commons-codec</groupId>
             <artifactId>commons-codec</artifactId>
-            <version>1.21.0</version>
+            <version>1.22.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
-            <version>2.21.0</version>
+            <version>2.22.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -253,7 +253,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
-                <version>3.6.2</version>
+                <version>3.6.3</version>
                 <executions>
                     <execution>
                         <id>enforce-java</id>
@@ -266,7 +266,7 @@
                                     <version>25</version>
                                 </requireJavaVersion>
                                 <requireMavenVersion>
-                                    <version>3.9.12</version>
+                                    <version>3.9.16</version>
                                 </requireMavenVersion>
                                 <dependencyConvergence />
                                 <banDuplicatePomDependencyVersions />
@@ -278,9 +278,55 @@
                 </executions>
             </plugin>
             <plugin>
+                <groupId>net.codecrete.windows-api</groupId>
+                <artifactId>windowsapi-maven-plugin</artifactId>
+                <version>0.8.7</version>
+                <configuration>
+                    <sourceDirectory>.</sourceDirectory>
+                    <basePackage>com.jcraft.jsch.windowsapi</basePackage>
+                    <addAsSourceRoot>false</addAsSourceRoot>
+                    <functions>
+                        <function>CloseHandle</function>
+                        <function>CopySid</function>
+                        <function>CreateFileMappingA</function>
+                        <function>FindWindowA</function>
+                        <function>GetCurrentProcessId</function>
+                        <function>GetLengthSid</function>
+                        <function>GetTokenInformation</function>
+                        <function>InitializeSecurityDescriptor</function>
+                        <function>IsValidSid</function>
+                        <function>MapViewOfFile</function>
+                        <function>OpenProcess</function>
+                        <function>OpenProcessToken</function>
+                        <function>SendMessageA</function>
+                        <function>SetSecurityDescriptorOwner</function>
+                        <function>UnmapViewOfFile</function>
+                    </functions>
+                    <structs>
+                        <struct>COPYDATASTRUCT</struct>
+                        <struct>SECURITY_ATTRIBUTES</struct>
+                        <struct>SECURITY_DESCRIPTOR</struct>
+                        <struct>SID_AND_ATTRIBUTES</struct>
+                        <struct>TOKEN_USER</struct>
+                    </structs>
+                    <enumerations>
+                        <enumeration>FILE_MAP</enumeration>
+                        <enumeration>PAGE_PROTECTION_FLAGS</enumeration>
+                        <enumeration>TOKEN_ACCESS_MASK</enumeration>
+                        <enumeration>TOKEN_INFORMATION_CLASS</enumeration>
+                    </enumerations>
+                    <constants>
+                        <constant>INVALID_HANDLE_VALUE</constant>
+                        <constant>MAXIMUM_ALLOWED</constant>
+                        <constant>SECURITY_DESCRIPTOR_REVISION</constant>
+                        <constant>WM_COPYDATA</constant>
+                    </constants>
+                </configuration>
+            </plugin>
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-toolchains-plugin</artifactId>
-                <version>3.2.0</version>
+                <version>3.3.0</version>
                 <executions>
                     <execution>
                         <goals>
@@ -292,7 +338,7 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>flatten-maven-plugin</artifactId>
-                <version>1.7.3</version>
+                <version>1.8.0</version>
                 <configuration>
                     <flattenMode>ossrh</flattenMode>
                     <flattenDependencyMode>all</flattenDependencyMode>
@@ -317,7 +363,7 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>build-helper-maven-plugin</artifactId>
-                <version>3.6.1</version>
+                <version>3.6.2</version>
                 <executions>
                     <execution>
                         <goals>
@@ -336,7 +382,7 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>templating-maven-plugin</artifactId>
-                <version>3.1.0</version>
+                <version>3.1.1</version>
                 <executions>
                     <execution>
                         <goals>
@@ -348,7 +394,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.15.0</version>
+                <version>3.16.0</version>
                 <configuration>
                     <release>8</release>
                     <showDeprecation>true</showDeprecation>
@@ -425,6 +471,36 @@
                         </configuration>
                     </execution>
                     <execution>
+                        <id>default-compile-19</id>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                        <configuration>
+                            <compileSourceRoots>
+                                <compileSourceRoot>${project.basedir}/src/main/java19</compileSourceRoot>
+                            </compileSourceRoots>
+                            <multiReleaseOutput>true</multiReleaseOutput>
+                            <release>19</release>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>default-compile-23</id>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                        <configuration>
+                            <compileSourceRoots>
+                                <compileSourceRoot>${project.basedir}/src/main/java23</compileSourceRoot>
+                                <compileSourceRoot>${project.build.directory}/generated-sources/windows-api</compileSourceRoot>
+                            </compileSourceRoots>
+                            <multiReleaseOutput>true</multiReleaseOutput>
+                            <release>23</release>
+                            <compilerArgs>
+                                <arg>-Xlint:all,-processing,-classfile,-options,-restricted</arg>
+                            </compilerArgs>
+                        </configuration>
+                    </execution>
+                    <execution>
                         <id>default-compile-24</id>
                         <goals>
                             <goal>compile</goal>
@@ -442,7 +518,7 @@
             <plugin>
                 <groupId>biz.aQute.bnd</groupId>
                 <artifactId>bnd-maven-plugin</artifactId>
-                <version>7.2.1</version>
+                <version>7.4.0</version>
                 <configuration>
                     <bnd><![CDATA[
                         -noimportjava: true
@@ -459,7 +535,7 @@
                         Import-Package: \
                             com.sun.jna*;version="${range;[=0,+)}";resolution:=optional,\
                             org.apache.logging.log4j*;version="${range;[=0,4)}";resolution:=optional,\
-                            org.bouncycastle*;version="[1.79,${versionmask;+})";resolution:=optional,\
+                            org.bouncycastle*;version="[1.84,${versionmask;+})";resolution:=optional,\
                             org.slf4j*;version="[1.7,${versionmask;+})";resolution:=optional,\
                             org.newsclub.net.unix;resolution:=optional,\
                             org.ietf.jgss;resolution:=optional,\
@@ -501,7 +577,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-resources-plugin</artifactId>
-                <version>3.4.0</version>
+                <version>3.5.0</version>
                 <executions>
                     <execution>
                         <id>copy-licenses</id>
@@ -527,7 +603,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
-                <version>3.5.0</version>
+                <version>3.5.1</version>
                 <configuration>
                     <archive>
                         <manifest>
@@ -565,8 +641,8 @@
                     <quiet>true</quiet>
                     <doclint>none</doclint>
                     <subpackages>com.jcraft.jsch</subpackages>
-                    <excludePackageNames>com.jcraft.jsch.*</excludePackageNames>
-                    <sourcepath>${project.build.sourceDirectory}:${project.build.directory}/generated-sources/java-templates:${project.basedir}/src/main/java9:${project.basedir}/src/main/java10:${project.basedir}/src/main/java11:${project.basedir}/src/main/java15:${project.basedir}/src/main/java16:${project.basedir}/src/main/java24</sourcepath>
+                    <excludePackageNames>com.jcraft.jsch.*,com.jcraft.jsch.windowsapi.windows.win32.*,com.jcraft.jsch.windowsapi.windows.win32.system.*,com.jcraft.jsch.windowsapi.windows.win32.ui.*</excludePackageNames>
+                    <sourcepath>${project.build.sourceDirectory}:${project.build.directory}/generated-sources/java-templates:${project.basedir}/src/main/java9:${project.basedir}/src/main/java10:${project.basedir}/src/main/java11:${project.basedir}/src/main/java15:${project.basedir}/src/main/java16:${project.basedir}/src/main/java19:${project.basedir}/src/main/java23:${project.build.directory}/generated-sources/windows-api:${project.basedir}/src/main/java24</sourcepath>
                 </configuration>
                 <executions>
                     <execution>
@@ -580,7 +656,7 @@
             <plugin>
                 <groupId>org.cyclonedx</groupId>
                 <artifactId>cyclonedx-maven-plugin</artifactId>
-                <version>2.9.1</version>
+                <version>2.9.3</version>
                 <configuration>
                     <includeProvidedScope>false</includeProvidedScope>
                     <includeSystemScope>false</includeSystemScope>
@@ -597,7 +673,7 @@
             <plugin>
                 <groupId>org.spdx</groupId>
                 <artifactId>spdx-maven-plugin</artifactId>
-                <version>1.0.3</version>
+                <version>1.0.4</version>
                 <configuration>
                     <includeProvidedScope>false</includeProvidedScope>
                     <includeSystemScope>false</includeSystemScope>
@@ -624,22 +700,22 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-deploy-plugin</artifactId>
-                <version>3.1.4</version>
+                <version>3.2.0</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-install-plugin</artifactId>
-                <version>3.1.4</version>
+                <version>3.2.0</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-site-plugin</artifactId>
-                <version>3.21.0</version>
+                <version>3.22.0</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
-                <version>3.9.0</version>
+                <version>3.11.0</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -664,6 +740,8 @@
                         <sourceDirectory>${project.basedir}/src/main/java11</sourceDirectory>
                         <sourceDirectory>${project.basedir}/src/main/java15</sourceDirectory>
                         <sourceDirectory>${project.basedir}/src/main/java16</sourceDirectory>
+                        <sourceDirectory>${project.basedir}/src/main/java19</sourceDirectory>
+                        <sourceDirectory>${project.basedir}/src/main/java23</sourceDirectory>
                         <sourceDirectory>${project.basedir}/src/main/java24</sourceDirectory>
                         <sourceDirectory>${project.basedir}/src/main/java-templates</sourceDirectory>
                     </sourceDirectories>
@@ -686,6 +764,30 @@
                         <directory>${project.basedir}/src/main/java11</directory>
                         <directory>${project.basedir}/src/main/java15</directory>
                         <directory>${project.basedir}/src/main/java16</directory>
+                        <directory>${project.basedir}/src/main/java19</directory>
+                        <directory>${project.basedir}/src/main/java23</directory>
+                        <directory>${project.basedir}/src/main/java24</directory>
+                        <directory>${project.basedir}/src/main/java-templates</directory>
+                    </directories>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>net.revelc.code</groupId>
+                <artifactId>impsort-maven-plugin</artifactId>
+                <version>1.13.0</version>
+                <configuration>
+                    <removeUnused>true</removeUnused>
+                    <directories>
+                        <directory>${project.build.sourceDirectory}</directory>
+                        <directory>${project.build.testSourceDirectory}</directory>
+                        <directory>${project.basedir}/examples</directory>
+                        <directory>${project.basedir}/src/main/java9</directory>
+                        <directory>${project.basedir}/src/main/java10</directory>
+                        <directory>${project.basedir}/src/main/java11</directory>
+                        <directory>${project.basedir}/src/main/java15</directory>
+                        <directory>${project.basedir}/src/main/java16</directory>
+                        <directory>${project.basedir}/src/main/java19</directory>
+                        <directory>${project.basedir}/src/main/java23</directory>
                         <directory>${project.basedir}/src/main/java24</directory>
                         <directory>${project.basedir}/src/main/java-templates</directory>
                     </directories>
@@ -694,27 +796,32 @@
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
-                <version>0.8.14</version>
+                <version>0.8.15</version>
                 <configuration>
                     <excludes>
+                        <exclude>com/jcraft/jsch/JavaThreadId.class</exclude>
                         <exclude>com/jcraft/jsch/JavaVersion.class</exclude>
                         <exclude>com/jcraft/jsch/JplLogger.class</exclude>
+                        <exclude>com/jcraft/jsch/PageantFFMConnector.class</exclude>
                         <exclude>com/jcraft/jsch/UnixDomainSocketFactory.class</exclude>
                         <exclude>com/jcraft/jsch/jce/KeyPairGenEdDSA.class</exclude>
+                        <exclude>com/jcraft/jsch/jce/MLKEM.class</exclude>
                         <exclude>com/jcraft/jsch/jce/MLKEM1024.class</exclude>
                         <exclude>com/jcraft/jsch/jce/MLKEM768.class</exclude>
                         <exclude>com/jcraft/jsch/jce/SignatureEd25519.class</exclude>
                         <exclude>com/jcraft/jsch/jce/SignatureEd448.class</exclude>
+                        <exclude>com/jcraft/jsch/jce/SignatureEdDSA.class</exclude>
                         <exclude>com/jcraft/jsch/jce/XDH.class</exclude>
                         <exclude>META-INF/versions/9/com/jcraft/jsch/JavaVersion.class</exclude>
                         <exclude>META-INF/versions/10/com/jcraft/jsch/JavaVersion.class</exclude>
+                        <exclude>META-INF/versions/19/com/jcraft/jsch/JavaThreadId.class</exclude>
                     </excludes>
                 </configuration>
             </plugin>
             <plugin>
                 <groupId>de.thetaphi</groupId>
                 <artifactId>forbiddenapis</artifactId>
-                <version>3.10</version>
+                <version>3.11</version>
                 <configuration>
                     <bundledSignatures>
                         <bundledSignature>jdk-unsafe</bundledSignature>
@@ -762,7 +869,7 @@
                     <plugin>
                         <groupId>org.sonatype.central</groupId>
                         <artifactId>central-publishing-maven-plugin</artifactId>
-                        <version>0.10.0</version>
+                        <version>0.11.0</version>
                         <extensions>true</extensions>
                         <configuration>
                             <publishingServerId>central</publishingServerId>
@@ -825,11 +932,12 @@
                                 <arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED</arg>
                                 <arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED</arg>
                                 <arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.main=ALL-UNNAMED</arg>
-                                <arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED</arg>
-                                <arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED</arg>
-                                <arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.processing=ALL-UNNAMED</arg>
-                                <arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED</arg>
+                                <arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.model=ALL-UNNAMED</arg>
                                 <arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED</arg>
+                                <arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.processing=ALL-UNNAMED</arg>
+                                <arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED</arg>
+                                <arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED</arg>
+                                <arg>-J--add-opens=jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED</arg>
                                 <arg>-J--add-opens=jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED</arg>
                             </compilerArgs>
                             <annotationProcessorPaths>
@@ -860,6 +968,18 @@
                             </execution>
                         </executions>
                     </plugin>
+                    <plugin>
+                        <groupId>net.revelc.code</groupId>
+                        <artifactId>impsort-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>sort-imports</id>
+                                <goals>
+                                    <goal>sort</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
                 </plugins>
             </build>
         </profile>
@@ -878,6 +998,18 @@
                                 <phase>verify</phase>
                                 <goals>
                                     <goal>validate</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>net.revelc.code</groupId>
+                        <artifactId>impsort-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>check</goal>
                                 </goals>
                             </execution>
                         </executions>
@@ -984,6 +1116,31 @@
                                 <phase>package</phase>
                                 <goals>
                                     <goal>createSPDX</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>windowsapi</id>
+            <activation>
+                <jdk>[21,)</jdk>
+                <property>
+                    <name>windowsapi.skip</name>
+                    <value>!true</value>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>net.codecrete.windows-api</groupId>
+                        <artifactId>windowsapi-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>windows-api</goal>
                                 </goals>
                             </execution>
                         </executions>

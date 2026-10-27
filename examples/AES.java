@@ -1,4 +1,6 @@
-/** This program will demonstrate how to use "aes128-cbc". */
+/**
+ * This program will demonstrate how to use "aes128-cbc".
+ */
 import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.Session;
@@ -33,7 +35,7 @@ public class AES {
       host = host.substring(host.indexOf('@') + 1);
 
       Session session = jsch.getSession(user, host, 22);
-      // session.setPassword("your password");
+      // session.setPassword("your password".getBytes());
 
       // username and password will be given via UserInfo interface.
       UserInfo ui = new MyUserInfo();
